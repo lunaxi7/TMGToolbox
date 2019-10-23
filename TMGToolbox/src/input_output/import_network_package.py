@@ -126,7 +126,7 @@ class ImportNetworkPackage(_m.Tool()):
         </div>""")
 
         pb.add_text_box(tool_attribute_name='ScenarioId',
-                        size=5,
+                        size=4,
                         title="New Scenario Number",
                         note="Enter a new or existing scenario")
         '''
@@ -796,8 +796,12 @@ class ImportNetworkPackage(_m.Tool()):
             s = self._getZipOriginalString(processed, contents, 'version.txt')
             if s is not None:
                  vf = package.open(s)
-                 NWPversion = float(vf.readline())
-                 if NWPversion >= 3:
+                 version = vf.readline()
+                 if version.startswith('Emme'):
+                     versionNum = float(version[5:8])
+                 else: 
+                     versionNum = float(version)
+                 if versionNum >= 3:
                      self._components.functions_file = self._getZipOriginalString(processed, contents, 'functions.411')
                  
                  s = self._getZipOriginalString(processed, contents, 'link_results.csv')
@@ -807,7 +811,7 @@ class ImportNetworkPackage(_m.Tool()):
                  self._components.transit_results_files = self._getZipOriginalString(processed, contents, 'segment_results.csv')
                  self._components.aux_transit_results_file = self._getZipOriginalString(processed, contents, 'aux_transit_results.csv')	     
                  self._components.attribute_header_file = self._getZipOriginalString(processed, contents, "exatts.241")		     
-                 return NWPversion
+                 return versionNum
 
         renumber_count = 0
         for component in contents:
@@ -879,14 +883,15 @@ class ImportNetworkPackage(_m.Tool()):
             nl = zf.namelist()
             if 'version.txt' in nl:
                 vf = zf.open('version.txt')
-                version = float(vf.readline())
+                version = vf.readline()
+                versionNumStr = version[5:12]
             else:
                 return (r"<table border='1' width='90&#37'><tbody><tr><td valign='top'><b>NWP Version:</b> 1.0</td>" +
                         r"<tr></tbody></table>")
 
             if 'info.txt' not in nl:
                 return r"<table border='1' width='90&#37'><tbody><tr><td valign='top'><b>NWP Version:</b>" + \
-                       " %s</td><tr></tbody></table>" % version
+                       " %s</td><tr></tbody></table>" % versionNumStr
 
             info = zf.open('info.txt')
             lines = info.readlines()
@@ -897,7 +902,7 @@ class ImportNetworkPackage(_m.Tool()):
                     Export Date
                     subsequent comment lines]
             '''
-            package_version = "<b>NWP Version:</b> %s" % version
+            package_version = "<b>NWP Version:</b> %s" % versionNumStr
             project_name = "<b>Project:</b> %s" % lines[0].strip()
             scenario_title = "<b>Scenario:</b> %s" % lines[2].strip()
             export_date = "<b>Export Date:</b> %s" % lines[3].strip()
